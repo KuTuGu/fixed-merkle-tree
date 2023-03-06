@@ -214,7 +214,7 @@ impl<T: Ord + Clone + AsRef<[u8]>, A: Algorithm<T>> FromIterator<T> for MerkleTr
         let pow = next_pow2(leafs);
         let size = 2 * pow - 1;
 
-        assert!(leafs > 1);
+        assert!(leafs > 0);
 
         MerkleTree {
             data,
