@@ -1,11 +1,11 @@
 extern crate alloc;
 
+use crate::hash::{Algorithm, Hashable};
+use crate::proof::Proof;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
 use core::marker::PhantomData;
 use core::ops;
-use crate::hash::{Hashable, Algorithm};
-use crate::proof::Proof;
 
 /// Merkle Tree.
 ///
@@ -41,6 +41,7 @@ use crate::proof::Proof;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MerkleTree<T: Ord + Clone + AsRef<[u8]>, A: Algorithm<T>> {
     data: Vec<T>,
+    zero_elements: Option<Vec<T>>,
     leafs: usize,
     height: usize,
     _a: PhantomData<A>,
@@ -62,17 +63,39 @@ impl<T: Ord + Clone + AsRef<[u8]>, A: Algorithm<T>> MerkleTree<T, A> {
         }))
     }
 
-    fn build(&mut self) {
+    /// Support fixed merkle tree
+    pub fn fixed_level(mut self, level: usize, zero_element: T) -> MerkleTree<T, A> {
         let mut a = A::default();
+        let mut zero_elements = vec![zero_element];
+        for i in 1..level {
+            a.reset();
+            zero_elements.push(a.node(zero_elements[i - 1].clone(), zero_elements[i - 1].clone()))
+        }
+
+        self.zero_elements = Some(zero_elements);
+        self.height = level;
+        self
+    }
+
+    /// `build` must be called manually after the initial configuration is complete
+    pub fn build(mut self) -> MerkleTree<T, A> {
+        let mut a = A::default();
+        let mut level = 0;
         let mut width = self.leafs;
 
-        // build tree
         let mut i: usize = 0;
         let mut j: usize = width;
-        while width > 1 {
+        while match &self.zero_elements {
+            Some(list) => level < list.len(),
+            None => width > 1,
+        } {
             // if there is odd num of elements, fill in to the even
             if width & 1 == 1 {
-                let he = self.data[self.len() - 1].clone();
+                let he = match &self.zero_elements {
+                    Some(list) => list[level].clone(),
+                    None => self.data[self.len() - 1].clone(),
+                };
+
                 self.data.push(he);
                 width += 1;
                 j += 1;
@@ -87,8 +110,11 @@ impl<T: Ord + Clone + AsRef<[u8]>, A: Algorithm<T>> MerkleTree<T, A> {
             }
 
             width >>= 1;
+            level += 1;
             j += width;
         }
+
+        self
     }
 
     /// Generate merkle tree inclusion proof for leaf `i`
@@ -190,15 +216,13 @@ impl<T: Ord + Clone + AsRef<[u8]>, A: Algorithm<T>> FromIterator<T> for MerkleTr
 
         assert!(leafs > 1);
 
-        let mut mt: MerkleTree<T, A> = MerkleTree {
+        MerkleTree {
             data,
+            zero_elements: None,
             leafs,
             height: log2_pow2(size + 1),
             _a: PhantomData,
-        };
-
-        mt.build();
-        mt
+        }
     }
 }
 
