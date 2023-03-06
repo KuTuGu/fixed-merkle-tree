@@ -1,9 +1,9 @@
 #![cfg(test)]
 
-use crate::hash::{Hashable, Algorithm};
-use crate::merkle::MerkleTree;
-use crate::merkle::next_pow2;
+use crate::hash::{Algorithm, Hashable};
 use crate::merkle::log2_pow2;
+use crate::merkle::next_pow2;
+use crate::merkle::MerkleTree;
 use crate::test_item::Item;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
@@ -106,7 +106,8 @@ fn test_simple_tree() {
                     a.hash()
                 })
                 .take(items),
-        );
+        )
+        .build();
 
         assert_eq!(mt.leafs(), items);
         assert_eq!(mt.height(), log2_pow2(next_pow2(mt.len())));

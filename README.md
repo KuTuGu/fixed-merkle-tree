@@ -96,7 +96,7 @@ fn main() {
     h2[0] = 0x22;
     h3[0] = 0x33;
 
-    let t: MerkleTree<[u8; 32], ExampleAlgorithm> = MerkleTree::from_iter(vec![h1, h2, h3]);
+    let t: MerkleTree<[u8; 32], ExampleAlgorithm> = MerkleTree::from_iter(vec![h1, h2, h3]).build();
     println!("{:?}", t.root());
 }
 ```

@@ -1,9 +1,9 @@
 #![cfg(test)]
 
 use crate::hash::*;
-use crate::merkle::MerkleTree;
-use crate::merkle::next_pow2;
 use crate::merkle::log2_pow2;
+use crate::merkle::next_pow2;
+use crate::merkle::MerkleTree;
 use std::fmt;
 use std::hash::Hasher;
 use std::iter::FromIterator;
@@ -84,7 +84,7 @@ fn test_hasher_light() {
 #[test]
 fn test_from_slice() {
     let x = [String::from("ars"), String::from("zxc")];
-    let mt: MerkleTree<[u8; 16], XOR128> = MerkleTree::from_data(&x);
+    let mt: MerkleTree<[u8; 16], XOR128> = MerkleTree::from_data(&x).build();
     assert_eq!(
         mt.as_slice(),
         [
@@ -109,7 +109,8 @@ fn test_from_iter() {
         a.reset();
         x.hash(&mut a);
         a.hash()
-    }));
+    }))
+    .build();
     assert_eq!(mt.len(), 7);
     assert_eq!(mt.height(), 3);
 }
@@ -199,7 +200,8 @@ fn test_simple_tree() {
                     a.hash()
                 })
                 .take(items),
-        );
+        )
+        .build();
 
         assert_eq!(mt.leafs(), items);
         assert_eq!(mt.height(), log2_pow2(next_pow2(mt.len())));
